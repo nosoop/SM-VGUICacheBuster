@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Source Engine Cached Request Bypass</title>
+		<!-- slap this in somewhere and replace the URL in the plugin -->
+		
+		<style>
+		body {
+			margin: 0;
+		}
+		
+		/* https://stackoverflow.com/a/27832759 */
+		#proxied_content {
+			display: block;
+			background: #000;
+			border: none;
+			height: 100vh;
+			width: 100vw;
+		}
+		</style>
+	</head>
+	<body>
+		<iframe id="proxied_content"> </iframe>
+		
+		<script>
+		/* Pass each page as a hash to this HTML page, Source Engine handles the rest. */
+		window.onload = window.onhashchange = function() {
+			var url = decodeURIComponent(window.location.hash.slice(1));
+			document.querySelector('#proxied_content').setAttribute('src', url);
+		}
+		</script>
+	</body>
+</html>
