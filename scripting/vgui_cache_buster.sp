@@ -16,7 +16,7 @@
 
 #pragma newdecls required
 
-#define PLUGIN_VERSION "1.0.1"
+#define PLUGIN_VERSION "1.0.2"
 public Plugin myinfo = {
 	name = "[ANY?] VGUI URL Cache Buster",
 	author = "nosoop",
@@ -78,7 +78,10 @@ public void OnPluginStart() {
 			"The URL to a static iframe page to proxy requests to.");
 	
 	g_PageDelay = CreateConVar("vgui_workaround_delay_time", "0.5",
-			"Amount of time (in seconds) to delay a page load.");
+			"Amount of time (in seconds) to delay a page load.", _,
+			true, 0.0);
+	
+	AutoExecConfig(true);
 	
 	UserMsg vguiMessage = GetUserMessageId("VGUIMenu");
 	HookUserMessage(vguiMessage, OnVGUIMenuPreSent, true);
