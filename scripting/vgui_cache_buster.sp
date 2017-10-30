@@ -45,9 +45,6 @@ public Plugin myinfo = {
  * page up (which has no guarantee) and don't modify the source to do anything malicious.
  * 
  * You can also configure the proxy page using the ConVar `vgui_workaround_proxy_page` instead.
- * 
- * The page is a simple page with some JavaScript and can be downloaded at the following link:
- * https://gist.github.com/nosoop/57fa25e21d027f1afc8c797131344561#file-motd_proxy-html
  */
 #define MOTD_PROXY_URL "http://motdproxy.us.to/"
 
