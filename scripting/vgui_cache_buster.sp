@@ -16,7 +16,7 @@
 
 #pragma newdecls required
 
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.0.1"
 public Plugin myinfo = {
 	name = "[ANY?] VGUI URL Cache Buster",
 	author = "nosoop",
@@ -175,10 +175,15 @@ public void DelayedSendDataPackVGUI_Pre(DataPack dataBuffer) {
 		}
 	}
 	
-	DisplayHiddenInvalidMOTD(players, nPlayers);
-	
-	// RequestFrame(SendDataPackVGUI, dataBuffer);
-	CreateTimer(g_PageDelay.FloatValue, DelayedSendDataPackVGUI, dataBuffer);
+	if (nPlayers) {
+		DisplayHiddenInvalidMOTD(players, nPlayers);
+		
+		// RequestFrame(SendDataPackVGUI, dataBuffer);
+		CreateTimer(g_PageDelay.FloatValue, DelayedSendDataPackVGUI, dataBuffer);
+	} else {
+		// no players to transmit to
+		delete dataBuffer;
+	}
 }
 
 public Action DelayedSendDataPackVGUI(Handle timer, DataPack dataBuffer) {
@@ -204,29 +209,31 @@ public void SendDataPackVGUI(DataPack dataBuffer) {
 	
 	int flags = dataBuffer.ReadCell();
 	
-	BfWrite buffer = view_as<BfWrite>(StartMessage("VGUIMenu", players, nPlayers,
-			flags | USERMSG_BLOCKHOOKS));
-	
-	buffer.WriteString("info");
-	buffer.WriteByte(dataBuffer.ReadCell()); // bShow
-	
-	int count = dataBuffer.ReadCell();
-	buffer.WriteByte(count);
-	
-	char content[1024];
-	for (int i = 0; i < count; i++) {
-		dataBuffer.ReadString(content, sizeof(content));
-		buffer.WriteString(content);
+	if (nPlayers) {
+		BfWrite buffer = view_as<BfWrite>(StartMessage("VGUIMenu", players, nPlayers,
+				flags | USERMSG_BLOCKHOOKS));
 		
-		dataBuffer.ReadString(content, sizeof(content));
-		buffer.WriteString(content);
+		buffer.WriteString("info");
+		buffer.WriteByte(dataBuffer.ReadCell()); // bShow
+		
+		int count = dataBuffer.ReadCell();
+		buffer.WriteByte(count);
+		
+		char content[1024];
+		for (int i = 0; i < count; i++) {
+			dataBuffer.ReadString(content, sizeof(content));
+			buffer.WriteString(content);
+			
+			dataBuffer.ReadString(content, sizeof(content));
+			buffer.WriteString(content);
+		}
+		
+		// writestring "cmd" and "closed_htmlpage" if you want to detect closing every html page
+		// could be useful by itself
+		
+		EndMessage();
 	}
-	
-	// writestring "cmd" and "closed_htmlpage" if you want to detect closing every html page
-	// could be useful by itself
-	
 	delete dataBuffer;
-	EndMessage();
 }
 
 /**
