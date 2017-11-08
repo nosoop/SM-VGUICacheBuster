@@ -3,3 +3,6 @@
 
 *.smx
 
+# Ignore build outputs
+build/
+plugins/
