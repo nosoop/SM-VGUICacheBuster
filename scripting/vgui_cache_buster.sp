@@ -16,9 +16,12 @@
 
 #pragma newdecls required
 
-#define PLUGIN_VERSION "1.0.3"
+#include "vgui_cache_buster/bitbuf.sp"
+#include "vgui_cache_buster/protobuf.sp"
+
+#define PLUGIN_VERSION "2.0.0"
 public Plugin myinfo = {
-	name = "[ANY?] VGUI URL Cache Buster",
+	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop",
 	description = "VGUIMenu fix for same-domain pages, enterprise edition.",
 	version = PLUGIN_VERSION,
@@ -95,16 +98,53 @@ public void OnPluginStart() {
 /**
  * Intercepts VGUIMenu messages, including ones created by ShowMOTDPanel and variants.
  */
-public Action OnVGUIMenuPreSent(UserMsg vguiMessage, BfRead buffer, const int[] players,
+public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] players,
 		int nPlayers, bool reliable, bool init) {
-	// implementation based on CHalfLife2::ShowVGUIMenu in sourcemod/core/HalfLife2.cpp
-	char name[128];
-	buffer.ReadString(name, sizeof(name));
+	KeyValues kvMessage;
 	
-	if (StrEqual(name, "info")) {
-		DataPack dataBuffer = new DataPack();
+	UserMessageType messageType = GetUserMessageType();
+	switch (messageType) {
+		case UM_BitBuf: {
+			kvMessage = BitBuf_VGUIMessageToKeyValues(view_as<BfRead>(buffer));
+		}
+		case UM_Protobuf: {
+			kvMessage = Protobuf_VGUIMessageToKeyValues(view_as<Protobuf>(buffer));
+		}
+		default: {
+			LogError("Plugin does not implement usermessage type %d to KV", messageType);
+		}
+	}
+	
+	if (kvMessage) {
+		char url[1024];
+		kvMessage.GetString("subkeys/msg", url, sizeof(url));
 		
-		// pack count of players and player list by userid
+		// determines if the usermessage is for a web page that needs bypassing
+		// (key "msg", value /^http/)
+		BypassMethod pageBypass;
+		if (StrContains(url, "http") != 0 || StrEqual(url, INVALID_PAGE_URL)
+				|| (pageBypass = GetBypassMethodForURL(url)) == Bypass_None) {
+			delete kvMessage;
+			return Plugin_Continue;
+		}
+		
+		if (pageBypass == Bypass_Proxy) {
+			char newURL[1024];
+			g_ProxyURL.GetString(newURL, sizeof(newURL));
+			
+			StrCat(newURL, sizeof(newURL), "#");
+			StrCat(newURL, sizeof(newURL), url);
+			
+			kvMessage.SetString("subkeys/msg", newURL);
+			
+			LogDebug("Rewriting URL for method %d: %s", pageBypass, newURL);
+		} else {
+			LogDebug("Passing URL as method %d: %s", pageBypass, url);
+		}
+		
+		// pack player count, list of players (userid), flags, and kvmessage
+		// TODO put kvmessage before flags so we don't have a wasted read on premature failure
+		DataPack dataBuffer = new DataPack();
 		dataBuffer.WriteCell(nPlayers);
 		for (int i = 0; i < nPlayers; i++) {
 			dataBuffer.WriteCell(GetClientUserId(players[i]));
@@ -112,47 +152,7 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, BfRead buffer, const int[] 
 		
 		int flags = (reliable? USERMSG_RELIABLE : 0) | (init? USERMSG_INITMSG : 0);
 		dataBuffer.WriteCell(flags);
-		
-		dataBuffer.WriteCell(buffer.ReadByte()); // bool bShow
-		
-		int count = buffer.ReadByte();
-		dataBuffer.WriteCell(count);
-		
-		// determines if the usermessage is for a web page that needs bypassing
-		// (key "msg", value /^http/)
-		BypassMethod pageBypass = Bypass_None; 
-		
-		// count is for key-value pairs
-		for (int i = 0; i < count; i++) {
-			char key[256], value[1024];
-			
-			buffer.ReadString(key, sizeof(key), false);
-			dataBuffer.WriteString(key);
-			
-			buffer.ReadString(value, sizeof(value), false);
-			
-			if (StrEqual(key, "msg") && StrContains(value, "http") == 0
-					&& !StrEqual(value, INVALID_PAGE_URL)) {
-				pageBypass = GetBypassMethodForURL(value);
-				
-				if (pageBypass == Bypass_Proxy) {
-					char newURL[1024];
-					g_ProxyURL.GetString(newURL, sizeof(newURL));
-					
-					StrCat(newURL, sizeof(newURL), "#");
-					StrCat(newURL, sizeof(newURL), value);
-					dataBuffer.WriteString(newURL);
-					
-					LogDebug("Rewriting URL for method %d: %s", pageBypass, newURL);
-				} else {
-					// either delayed send or passthrough, so just copy value back
-					dataBuffer.WriteString(value);
-					LogDebug("Passing URL as method %d: %s", pageBypass, value);
-				}
-			} else {
-				dataBuffer.WriteString(value);
-			}
-		}
+		dataBuffer.WriteCell(kvMessage);
 		
 		switch (pageBypass) {
 			case Bypass_Proxy: {
@@ -164,7 +164,14 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, BfRead buffer, const int[] 
 				RequestFrame(DelayedSendDataPackVGUI_Pre, dataBuffer);
 				return Plugin_Handled;
 			}
+			case Bypass_None: {
+				ThrowError("Should've been impossible to reach this block since we checked for passthrough earlier??");
+				delete kvMessage;
+				delete dataBuffer;
+			}
 			default: {
+				ThrowError("Unimplemented bypass handler for method %d", pageBypass);
+				delete kvMessage;
 				delete dataBuffer;
 			}
 		}
@@ -189,11 +196,14 @@ public void DelayedSendDataPackVGUI_Pre(DataPack dataBuffer) {
 	if (nPlayers) {
 		DisplayHiddenInvalidMOTD(players, nPlayers);
 		
-		// RequestFrame(SendDataPackVGUI, dataBuffer);
+		// RequestFrame(SendDataPackVGUI, dataBuffer); // doesn't work
 		CreateTimer(g_PageDelay.FloatValue, DelayedSendDataPackVGUI, dataBuffer);
 	} else {
-		// no players to transmit to
+		dataBuffer.ReadCell(); // flags
+		KeyValues kvMessage = dataBuffer.ReadCell();
+		
 		delete dataBuffer;
+		delete kvMessage;
 	}
 }
 
@@ -219,36 +229,29 @@ public void SendDataPackVGUI(DataPack dataBuffer) {
 	}
 	
 	int flags = dataBuffer.ReadCell();
+	KeyValues kvMessage = dataBuffer.ReadCell();
 	
 	if (nPlayers) {
-		BfWrite buffer = view_as<BfWrite>(StartMessage("VGUIMenu", players, nPlayers,
-				flags | USERMSG_BLOCKHOOKS));
-		
-		buffer.WriteString("info");
-		buffer.WriteByte(dataBuffer.ReadCell()); // bShow
-		
-		int count = dataBuffer.ReadCell();
-		buffer.WriteByte(count);
-		
-		char content[1024];
-		for (int i = 0; i < count; i++) {
-			dataBuffer.ReadString(content, sizeof(content));
-			buffer.WriteString(content);
-			
-			dataBuffer.ReadString(content, sizeof(content));
-			buffer.WriteString(content);
+		UserMessageType messageType = GetUserMessageType();
+		switch (messageType) {
+			case UM_BitBuf: {
+				BitBuf_KeyValuesToVGUIMessage(players, nPlayers, flags, kvMessage);
+			}
+			case UM_Protobuf: {
+				Protobuf_KeyValuesToVGUIMessage(players, nPlayers, flags, kvMessage);
+			}
+			default: {
+				LogError("Plugin does not implement KV to usermessage type %d", messageType);
+			}
 		}
-		
-		// writestring "cmd" and "closed_htmlpage" if you want to detect closing every html page
-		// could be useful by itself
-		
-		EndMessage();
 	}
+	delete kvMessage;
 	delete dataBuffer;
 }
 
 /**
  * Displays a hidden MOTD that makes a request to INVALID_PAGE_URL.
+ * This has cross-game support since we're not sending raw user messages.
  */
 void DisplayHiddenInvalidMOTD(const int[] players, int nPlayers) {
 	static KeyValues invalidPageInfo;
