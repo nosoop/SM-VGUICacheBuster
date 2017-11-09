@@ -16,7 +16,7 @@
 
 #pragma newdecls required
 
-#define PLUGIN_VERSION "1.0.2"
+#define PLUGIN_VERSION "1.0.3"
 public Plugin myinfo = {
 	name = "[ANY?] VGUI URL Cache Buster",
 	author = "nosoop",
@@ -62,9 +62,14 @@ enum BypassMethod {
 };
 
 KeyValues g_URLConfig;
-ConVar g_ProxyURL, g_PageDelay;
+ConVar g_ProxyURL, g_PageDelay, g_DebugSpew;
 
 public void OnPluginStart() {
+	if (GetUserMessageType() != UM_BitBuf) {
+		SetFailState("This plugin only processes bitbuffer messages, wait for a future update "
+				... "that supports protobufs");
+	}
+	
 	char configPath[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, configPath, sizeof(configPath), "%s", PLUGIN_CONFIG_FILE);
 	
@@ -79,6 +84,9 @@ public void OnPluginStart() {
 			true, 0.0);
 	
 	AutoExecConfig(true);
+	
+	g_DebugSpew = CreateConVar("vgui_workaround_debug_spew", "0",
+			"Whether or not to display debugging messages.", _, true, 0.0, true, 1.0);
 	
 	UserMsg vguiMessage = GetUserMessageId("VGUIMenu");
 	HookUserMessage(vguiMessage, OnVGUIMenuPreSent, true);
@@ -134,9 +142,12 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, BfRead buffer, const int[] 
 					StrCat(newURL, sizeof(newURL), "#");
 					StrCat(newURL, sizeof(newURL), value);
 					dataBuffer.WriteString(newURL);
+					
+					LogDebug("Rewriting URL for method %d: %s", pageBypass, newURL);
 				} else {
 					// either delayed send or passthrough, so just copy value back
 					dataBuffer.WriteString(value);
+					LogDebug("Passing URL as method %d: %s", pageBypass, value);
 				}
 			} else {
 				dataBuffer.WriteString(value);
@@ -304,4 +315,16 @@ static BypassMethod GetBypassMethodFromString(const char[] bypassMethod) {
 	}
 	
 	return Bypass_DelayedLoad;
+}
+
+void LogDebug(const char[] format, any ...) {
+	if (g_DebugSpew.BoolValue) {
+		char message[1024], pluginName[PLATFORM_MAX_PATH], dateTime[64];
+		
+		VFormat(message, sizeof(message), format, 2);
+		GetPluginFilename(INVALID_HANDLE, pluginName, sizeof(pluginName));
+		FormatTime(dateTime, sizeof(dateTime), NULL_STRING);
+		
+		PrintToServer("- %s: [%s] %s", dateTime, pluginName, message);
+	}
 }
