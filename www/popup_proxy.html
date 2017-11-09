@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Source Engine Cached Request Bypass (CS:GO display)</title>
+</head>
+
+<body>
+	<script>
+	/* Pass each page as a hash to this HTML page, Source Engine handles the rest. */
+	window.onload = window.onhashchange = () => {
+		let url = decodeURIComponent(window.location.hash.slice(1));
+		window.open(url, '_blank', `width=${screen.width}, height=${screen.height}`)
+	}
+	</script>
+</body>
+</html>
