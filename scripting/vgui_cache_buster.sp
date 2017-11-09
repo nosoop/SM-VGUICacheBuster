@@ -19,7 +19,7 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "2.0.0"
+#define PLUGIN_VERSION "2.0.1"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop",
@@ -150,9 +150,10 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			dataBuffer.WriteCell(GetClientUserId(players[i]));
 		}
 		
+		dataBuffer.WriteCell(kvMessage);
+		
 		int flags = (reliable? USERMSG_RELIABLE : 0) | (init? USERMSG_INITMSG : 0);
 		dataBuffer.WriteCell(flags);
-		dataBuffer.WriteCell(kvMessage);
 		
 		switch (pageBypass) {
 			case Bypass_Proxy: {
@@ -199,7 +200,6 @@ public void DelayedSendDataPackVGUI_Pre(DataPack dataBuffer) {
 		// RequestFrame(SendDataPackVGUI, dataBuffer); // doesn't work
 		CreateTimer(g_PageDelay.FloatValue, DelayedSendDataPackVGUI, dataBuffer);
 	} else {
-		dataBuffer.ReadCell(); // flags
 		KeyValues kvMessage = dataBuffer.ReadCell();
 		
 		delete dataBuffer;
@@ -228,8 +228,8 @@ public void SendDataPackVGUI(DataPack dataBuffer) {
 		}
 	}
 	
-	int flags = dataBuffer.ReadCell();
 	KeyValues kvMessage = dataBuffer.ReadCell();
+	int flags = dataBuffer.ReadCell();
 	
 	if (nPlayers) {
 		UserMessageType messageType = GetUserMessageType();
