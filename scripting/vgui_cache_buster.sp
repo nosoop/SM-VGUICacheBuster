@@ -19,7 +19,7 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "2.0.1"
+#define PLUGIN_VERSION "2.0.2"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop",
@@ -68,11 +68,6 @@ KeyValues g_URLConfig;
 ConVar g_ProxyURL, g_PageDelay, g_DebugSpew;
 
 public void OnPluginStart() {
-	if (GetUserMessageType() != UM_BitBuf) {
-		SetFailState("This plugin only processes bitbuffer messages, wait for a future update "
-				... "that supports protobufs");
-	}
-	
 	char configPath[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, configPath, sizeof(configPath), "%s", PLUGIN_CONFIG_FILE);
 	
@@ -128,7 +123,18 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			return Plugin_Continue;
 		}
 		
-		if (pageBypass == Bypass_Proxy) {
+		/**
+		 * CS:GO quirk rundown:
+		 * we don't *need* to delay the page for visible proxied popups, but we have to delay
+		 * the ones that are hidden since we pass the URL directly
+		 * 
+		 * argh
+		 * 
+		 * always use delayed loads then, and if (show), proxy it
+		 */
+		bool bForceRewriteURL = GetEngineVersion() == Engine_CSGO && kvMessage.GetNum("show");
+		
+		if (pageBypass == Bypass_Proxy || bForceRewriteURL) {
 			char newURL[1024];
 			g_ProxyURL.GetString(newURL, sizeof(newURL));
 			
