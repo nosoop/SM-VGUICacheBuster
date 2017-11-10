@@ -8,8 +8,10 @@ in certain cases.  It is a drop-in and configurable solution that hooks and modi
 messages that display web content.
 
 Tested to work in Team Fortress 2.  Proxy method also tested in Empires.  Should work in most
-other games.  Probably won't work in CS:GO (as they use protobufs instead of bitbuffers for
-usermessages).
+other games.
+
+CS:GO support is a work-in-progress.  It's hard to write for since I don't have the game to test
+with.
 
 ## Workarounds
 
@@ -57,3 +59,18 @@ can add a number of URL prefixes (without the protocol specifier), to be handled
 workaround or to bypass the workaround.
 
 See the provided file for more details.
+
+### CS:GO-specific configuration
+
+CS:GO should only use the "delayed load" method.  There is an additional workaround implemented
+specifically for CS:GO that opens visible pages as a pop-up window, which is handled by a
+different proxy page that calls `window.open)`.
+
+1.  Set your `vgui_workaround_proxy_page` ConVar to a hosted copy of `www/popup_proxy.html`.
+You can also set the value to `http://motdproxy.us.to/popup.html`.
+2.  Rename `configs/vgui_cache_buster_urls_csgo.cfg` to `configs/vgui_cache_buster_urls.cfg`.
+This forces usage of the wildcard and makes all URLs use the delayed load method.
+	* You theoretically *can* set pages that will always be displayed to use the `proxy` method
+	instead (as visible popups will just keep using the proxy).  Any hidden pages will still
+	need to use the delayed load, however.
+3.	Reload the plugin.
