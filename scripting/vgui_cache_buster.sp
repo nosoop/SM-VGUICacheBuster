@@ -16,10 +16,12 @@
 
 #pragma newdecls required
 
+// todo define maximum buffer / URL size so we don't have "1024" sprinkled everywhere
+
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "2.0.2"
+#define PLUGIN_VERSION "2.0.2-csgo-dimensions-r01"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop",
@@ -136,10 +138,30 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 		
 		if (pageBypass == Bypass_Proxy || bForceRewriteURL) {
 			char newURL[1024];
+			
 			g_ProxyURL.GetString(newURL, sizeof(newURL));
 			
+			// use custom subkeys in case Valve ends up using "width" and "height"
+			int popupWidth = kvMessage.GetNum("x-vgui-width", -1);
+			int popupHeight = kvMessage.GetNum("x-vgui-height", -1);
+			
 			StrCat(newURL, sizeof(newURL), "#");
-			StrCat(newURL, sizeof(newURL), url);
+			
+			// only handle popup values if using CS:GO method
+			if (bForceRewriteURL && (popupWidth != -1 || popupHeight != -1)) {
+				// new method, encode params
+				// TODO maybe just iterate KV and add all "x-vgui-" params to query string
+				char encodedURL[1024], query[1024];
+				URLEncode(url, encodedURL, sizeof(encodedURL));
+				
+				Format(query, sizeof(query), "width=%d&height=%d&url=%s",
+						popupWidth, popupHeight, encodedURL);
+				
+				StrCat(newURL, sizeof(newURL), query);
+			} else {
+				// classic method, append new url to existing one
+				StrCat(newURL, sizeof(newURL), url);
+			}
 			
 			kvMessage.SetString("subkeys/msg", newURL);
 			
@@ -236,6 +258,8 @@ public void SendDataPackVGUI(DataPack dataBuffer) {
 	
 	KeyValues kvMessage = dataBuffer.ReadCell();
 	int flags = dataBuffer.ReadCell();
+	
+	// TODO maybe strip "x-vgui-" keys before sending
 	
 	if (nPlayers) {
 		UserMessageType messageType = GetUserMessageType();
@@ -335,5 +359,34 @@ void LogDebug(const char[] format, any ...) {
 		FormatTime(dateTime, sizeof(dateTime), NULL_STRING);
 		
 		PrintToServer("- %s: [%s] %s", dateTime, pluginName, message);
+	}
+}
+
+// https://github.com/InvexByte/WebFix/blob/master/addons/sourcemod/scripting/include/webfix.inc#L175
+// looks like it works for unicode, hf
+void URLEncode(const char[] sString, char[] sResult, int len) {
+	static char sHexTable[] = "0123456789ABCDEF";
+	int from, to;
+	char c;
+
+	while (from < len) {
+		c = sString[from++];
+		if (c == 0) {
+			sResult[to++] = c;
+			break;
+		} else if (c == ' ') {
+			sResult[to++] = '+';
+		} else if ((c < '0' && c != '-' && c != '.') ||	(c < 'A' && c > '9') ||
+				(c > 'Z' && c < 'a' && c != '_') || (c > 'z')) {
+			if ((to + 3) > len) {
+				sResult[to] = 0;
+				break;
+			}
+			sResult[to++] = '%';
+			sResult[to++] = sHexTable[c >> 4];
+			sResult[to++] = sHexTable[c & 15];
+		} else {
+			sResult[to++] = c;
+		}
 	}
 }

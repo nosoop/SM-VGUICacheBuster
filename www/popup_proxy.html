@@ -9,8 +9,23 @@
 	<script>
 	/* Pass each page as a hash to this HTML page, Source Engine handles the rest. */
 	window.onload = window.onhashchange = () => {
-		let url = decodeURIComponent(window.location.hash.slice(1));
-		window.open(url, '_blank', `width=${screen.width}, height=${screen.height}`)
+		let hash = window.location.hash.slice(1);
+		
+		if (hash.startsWith('http')) {
+			// backcompat
+			let url = decodeURIComponent(hash);
+			window.open(url, '_blank', `width=${screen.width}, height=${screen.height}`)
+		} else {
+			// using new method
+			let params = new URLSearchParams(hash);
+			let w = Number(params.get('width')), h = Number(params.get('height'));
+			
+			w = w == -1? screen.width : w;
+			h = h == -1? screen.height : h;
+			
+			let url = decodeURIComponent(params.get('url'));
+			window.open(url, "_blank", `width=${w},height=${h}`);
+		}
 	}
 	</script>
 </body>
