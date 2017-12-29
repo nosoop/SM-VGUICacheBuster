@@ -21,7 +21,7 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "2.0.2-csgo-dimensions-r01"
+#define PLUGIN_VERSION "2.0.2-csgo-dimensions-r02"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop",
@@ -142,13 +142,15 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			g_ProxyURL.GetString(newURL, sizeof(newURL));
 			
 			// use custom subkeys in case Valve ends up using "width" and "height"
-			int popupWidth = kvMessage.GetNum("x-vgui-width", -1);
-			int popupHeight = kvMessage.GetNum("x-vgui-height", -1);
+			// defaults to 0
+			int popupWidth = kvMessage.GetNum("x-vgui-width");
+			int popupHeight = kvMessage.GetNum("x-vgui-height");
 			
 			StrCat(newURL, sizeof(newURL), "#");
 			
-			// only handle popup values if using CS:GO method
-			if (bForceRewriteURL && (popupWidth != -1 || popupHeight != -1)) {
+			// only handle popup values if using CS:GO method, classic method will fullscreen
+			// TODO remove classic method when verified working, but keep backcompat in HTML
+			if (bForceRewriteURL) {
 				// new method, encode params
 				// TODO maybe just iterate KV and add all "x-vgui-" params to query string
 				char encodedURL[1024], query[1024];

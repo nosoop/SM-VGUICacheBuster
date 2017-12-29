@@ -18,13 +18,11 @@
 		} else {
 			// using new method
 			let params = new URLSearchParams(hash);
+			
 			let w = Number(params.get('width')), h = Number(params.get('height'));
-			
-			w = w == -1? screen.width : w;
-			h = h == -1? screen.height : h;
-			
 			let url = decodeURIComponent(params.get('url'));
-			window.open(url, "_blank", `width=${w},height=${h}`);
+			
+			window.open(url, "_blank", `width=${w || screen.width},height=${h || screen.height}`);
 		}
 	}
 	</script>

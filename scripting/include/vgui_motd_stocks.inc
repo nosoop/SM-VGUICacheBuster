@@ -1,8 +1,8 @@
 // TODO register cache buster as a shared plugin?
 // have to figure out some way to ensure these extended features are discoverable
 
-// if -1 cache buster will not pass dimensions to proxy page and assume default
-#define CSGO_POPUP_FULL -1
+// if 0 cache buster will not pass dimensions to proxy page and assume default
+#define CSGO_POPUP_FULL 0
 
 /**
  * Displays an MOTD panel with CS:GO-specific options
