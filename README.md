@@ -76,7 +76,8 @@ specifically for CS:GO that opens visible pages as a pop-up window, which is han
 different proxy page that calls `window.open)`.
 
 1.  Set your `vgui_workaround_proxy_page` ConVar to a hosted copy of `www/popup_proxy.html`.
-You can also set the value to `http://motdproxy.us.to/popup.html`.
+You can also set the value to either `https://rawgit.com/nosoop/SM-VGUICacheBuster/3.0.0/www/popup_proxy.html`
+or `http://motdproxy.us.to/popup.html?v=3`.
 2.  Rename `configs/vgui_cache_buster_urls_csgo.cfg` to `configs/vgui_cache_buster_urls.cfg`.
 This forces usage of the wildcard and makes all URLs use the delayed load method.
 	* You theoretically *can* set pages that will always be displayed to use the `proxy` method
