@@ -16,7 +16,7 @@
 			let url = decodeURIComponent(hash);
 			window.open(url, '_blank', `width=${screen.width}, height=${screen.height}`)
 		} else {
-			// using new method
+			// using new method with params
 			let params = new URLSearchParams(hash);
 			
 			let w = Number(params.get('width')), h = Number(params.get('height'));

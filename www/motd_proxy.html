@@ -26,8 +26,18 @@
 	<script>
 	/* Pass each page as a hash to this HTML page, Source Engine handles the rest. */
 	window.onload = window.onhashchange = () => {
-		let url = decodeURIComponent(window.location.hash.slice(1));
-		document.querySelector('#proxied_content').setAttribute('src', url);
+		let hash = window.location.hash.slice(1);
+		
+		if (hash.startsWith('http')) {
+			// backcompat
+			document.querySelector('#proxied_content').setAttribute('src', url);
+		} else {
+			// using new method with params
+			let params = new URLSearchParams(hash);
+			let url = decodeURIComponent(params.get('url'));
+			
+			document.querySelector('#proxied_content').setAttribute('src', url);
+		}
 	}
 	</script>
 </body>
