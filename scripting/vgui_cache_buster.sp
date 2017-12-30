@@ -1,15 +1,17 @@
 /**
- * [ANY?] VGUI URL Cache Buster
+ * [ANY] VGUI URL Cache Buster
  * 
  * Steam's web controls (using CEF) has issues where attempting to navigate to a page on the
  * same domain as a previously loaded page fails to work.
  * 
- * This plugin hooks into the VGUIMenu user message and performs some questionable magic to try
- * and work around the issue.
+ * Additionally, in CS:GO, `ShowMOTDPanel` doesn't display the web panel; it requires a popup
+ * page for it to work.
  * 
- * The plugin is mainly tested on TF2 and has been tested on Empires, though it may work on
- * other games.  Any games using protobufs for their user messages are currently *not*
- * supported, such as CS:GO.
+ * This plugin hooks into the VGUIMenu user message and performs some questionable magic to try
+ * and work around these issues.
+ * 
+ * The plugin is mainly tested on TF2, though other games have been tested and working,
+ * including protocol buffers.
  */
 #pragma semicolon 1
 #include <sourcemod>
@@ -176,8 +178,7 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			LogDebug("Passing URL as method %d: %s", pageBypass, url);
 		}
 		
-		// pack player count, list of players (userid), flags, and kvmessage
-		// TODO put kvmessage before flags so we don't have a wasted read on premature failure
+		// pack player count, list of players (userid), kvmessage, and flags
 		DataPack dataBuffer = new DataPack();
 		dataBuffer.WriteCell(nPlayers);
 		for (int i = 0; i < nPlayers; i++) {
