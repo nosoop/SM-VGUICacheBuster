@@ -116,10 +116,13 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 		char url[1024];
 		kvMessage.GetString("subkeys/msg", url, sizeof(url));
 		
+		int panelType = kvMessage.GetNum("subkeys/type", MOTDPANEL_TYPE_INDEX);
+		
 		// determines if the usermessage is for a web page that needs bypassing
 		// (key "msg", value /^http/)
 		BypassMethod pageBypass;
 		if (StrContains(url, "http") != 0 || StrEqual(url, INVALID_PAGE_URL)
+				|| panelType != MOTDPANEL_TYPE_URL
 				|| (pageBypass = GetBypassMethodForURL(url)) == Bypass_None) {
 			delete kvMessage;
 			return Plugin_Continue;
@@ -152,10 +155,10 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			// TODO remove classic method when verified working, but keep backcompat in HTML
 			if (bForceRewriteURL) {
 				// new method, encode params
-				// TODO maybe just iterate KV and add all "x-vgui-" params to query string
 				char encodedURL[1024], query[1024];
 				URLEncode(url, encodedURL, sizeof(encodedURL));
 				
+				// TODO maybe just iterate KV and add all "x-vgui-" params to query string
 				Format(query, sizeof(query), "width=%d&height=%d&url=%s",
 						popupWidth, popupHeight, encodedURL);
 				
@@ -163,6 +166,7 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			} else {
 				// classic method, append new url to existing one
 				StrCat(newURL, sizeof(newURL), url);
+				LogDebug("Using old method of displaying panel");
 			}
 			
 			kvMessage.SetString("subkeys/msg", newURL);
