@@ -143,8 +143,8 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			
 			// use custom subkeys in case Valve ends up using "width" and "height"
 			// defaults to 0
-			int popupWidth = kvMessage.GetNum("x-vgui-width");
-			int popupHeight = kvMessage.GetNum("x-vgui-height");
+			int popupWidth = kvMessage.GetNum("subkeys/x-vgui-width");
+			int popupHeight = kvMessage.GetNum("subkeys/x-vgui-height");
 			
 			StrCat(newURL, sizeof(newURL), "#");
 			
