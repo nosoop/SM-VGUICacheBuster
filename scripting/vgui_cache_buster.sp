@@ -23,7 +23,7 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "2.0.2-csgo-dimensions-r03"
+#define PLUGIN_VERSION "2.0.2-csgo-dimensions-r04"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop (and various bits from Invex | Byte, Boomix)",
@@ -52,8 +52,13 @@ public Plugin myinfo = {
  * page up (which has no guarantee) and don't modify the source to do anything malicious.
  * 
  * You can also configure the proxy page using the ConVar `vgui_workaround_proxy_page` instead.
+ * 
+ * Version 3 of this plugin changed the default proxy URL to have a version query added to the
+ * end.  It makes no difference whether the query is present or not to the server; it just
+ * ensures clients aren't using stale HTML files, as the newest version added support for params
+ * embedded in the location hash.
  */
-#define MOTD_PROXY_URL "http://motdproxy.us.to/"
+#define MOTD_PROXY_URL "http://motdproxy.us.to/?v=3"
 
 /**
  * Path to the config file.
