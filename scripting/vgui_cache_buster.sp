@@ -21,10 +21,10 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "2.0.2-csgo-dimensions-r02"
+#define PLUGIN_VERSION "2.0.2-csgo-dimensions-r03"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
-	author = "nosoop",
+	author = "nosoop (and various bits from Invex | Byte, Boomix)",
 	description = "VGUIMenu fix for same-domain pages, enterprise edition.",
 	version = PLUGIN_VERSION,
 	url = "https://github.com/nosoop/SM-VGUICacheBuster"
@@ -364,7 +364,7 @@ void LogDebug(const char[] format, any ...) {
 	}
 }
 
-// https://github.com/InvexByte/WebFix/blob/master/addons/sourcemod/scripting/include/webfix.inc#L175
+// urlencode stock, no idea about the original source
 // looks like it works for unicode, hf
 void URLEncode(const char[] sString, char[] sResult, int len) {
 	static char sHexTable[] = "0123456789ABCDEF";
