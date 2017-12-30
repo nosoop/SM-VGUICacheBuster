@@ -58,7 +58,7 @@ public Plugin myinfo = {
  * ensures clients aren't using stale HTML files, as the newest version added support for params
  * embedded in the location hash.
  */
-#define MOTD_PROXY_URL "http://motdproxy.us.to/?v=3"
+#define MOTD_PROXY_URL "https://cdn.rawgit.com/nosoop/SM-VGUICacheBuster/3.0.0/www/motd_proxy.html"
 
 /**
  * Path to the config file.
