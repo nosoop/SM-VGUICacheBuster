@@ -153,23 +153,15 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			
 			StrCat(newURL, sizeof(newURL), "#");
 			
-			// only handle popup values if using CS:GO method, classic method will fullscreen
-			// TODO remove classic method when verified working, but keep backcompat in HTML
-			if (bForceRewriteURL) {
-				// new method, encode params
-				char encodedURL[1024], query[1024];
-				URLEncode(url, encodedURL, sizeof(encodedURL));
-				
-				// TODO maybe just iterate KV and add all "x-vgui-" params to query string
-				Format(query, sizeof(query), "width=%d&height=%d&url=%s",
-						popupWidth, popupHeight, encodedURL);
-				
-				StrCat(newURL, sizeof(newURL), query);
-			} else {
-				// classic method, append new url to existing one
-				StrCat(newURL, sizeof(newURL), url);
-				LogDebug("Using old method of displaying panel");
-			}
+			// new method, encode params
+			char encodedURL[1024], query[1024];
+			URLEncode(url, encodedURL, sizeof(encodedURL));
+			
+			// TODO maybe just iterate KV and add all "x-vgui-" params to query string
+			Format(query, sizeof(query), "width=%d&height=%d&url=%s",
+					popupWidth, popupHeight, encodedURL);
+			
+			StrCat(newURL, sizeof(newURL), query);
 			
 			kvMessage.SetString("subkeys/msg", newURL);
 			
