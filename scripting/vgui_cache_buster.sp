@@ -23,7 +23,7 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "2.0.2-csgo-dimensions-r04"
+#define PLUGIN_VERSION "3.0.0"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop (and various bits from Invex | Byte, Boomix)",

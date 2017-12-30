@@ -8,10 +8,10 @@ in certain cases.  It is a drop-in and configurable solution that hooks and modi
 messages that display web content.
 
 Tested to work in Team Fortress 2.  Proxy method also tested in Empires.  Should work in most
-other games.
+other games that support web panels.
 
-CS:GO support is a work-in-progress.  It's hard to write for since I don't have the game to test
-with.
+The plugin also handles CS:GO-specific quirks in opening web pages.  Using `ShowMOTDPanel` in
+SourcePawn will now make the page visible to the user, rather than showing an empty gray panel.
 
 ## Workarounds
 
@@ -38,6 +38,15 @@ of time, and then transmitting the requested page later.  The first request is m
 
 From my testing, this workaround works most of the time, and no `<iframe>` element is required.
 However, it does induce a delay, and it seems to fail occasionally.
+
+## Extensions
+
+Extensions have been added where custom keys/values introduce new behavior that are handled with
+the plugin.
+
+* `x-vgui-width` and `x-vgui-height` communicate the popup size in CS:GO.
+
+See `include/vgui_motd_stocks.inc` to see how.
 
 ## Configuration
 
