@@ -9,57 +9,39 @@
  */
 stock void CSGO_ShowMOTDPanel(int client, const char[] title, const char[] url,
 		bool show = false, int width = CSGO_POPUP_FULL, int height = CSGO_POPUP_FULL) {
-	if (!IsClientInGame(client) || IsFakeClient(client)) {
-		return;
-	}
-
-	//Send VGUI message without with USERMSG_BLOCKHOOKS flag
-	int players[1];
-	players[0] = client;
-	Handle msg = StartMessage("VGUIMenu", players, 1);
-	Protobuf pb = UserMessageToProtobuf(msg);
-
-	pb.SetString("name", "info");
-	pb.SetBool("show", show);
-
-	char buffer[64];
-
-	Protobuf subkey;
-
-	//Set custom fields for width and height
+	KeyValues kv = new KeyValues("data");
+	
+	kv.SetString("title", title);
+	kv.SetNum("type", MOTDPANEL_TYPE_URL);
+	kv.SetString("msg", url);
+	
 	if (show) {
-		subkey = pb.AddMessage("subkeys");
-		IntToString(width, buffer, sizeof(buffer));
-		subkey.SetString("name", "x-vgui-width");
-		subkey.SetString("str", buffer);
-
-		subkey = pb.AddMessage("subkeys");
-		IntToString(height, buffer, sizeof(buffer));
-		subkey.SetString("name", "x-vgui-height");
-		subkey.SetString("str", buffer);
+		// extended options handled by cache buster
+		kv.SetNum("x-vgui-width", width);
+		kv.SetNum("x-vgui-height", height);
 	}
-
-	//Set standard fields
-	subkey = pb.AddMessage("subkeys");
-	subkey.SetString("name", "title");
-	subkey.SetString("str", title);
-
-	subkey = pb.AddMessage("subkeys");
-	IntToString(MOTDPANEL_TYPE_URL, buffer, sizeof(buffer));
-	subkey.SetString("name", "type");
-	subkey.SetString("str", buffer);
-
-	subkey = pb.AddMessage("subkeys");
-	subkey.SetString("name", "msg");
-	subkey.SetString("str", url);
-
-	EndMessage();
+	
+	ShowVGUIPanel(client, "info", kv, show);
+	
+	delete kv;
 }
 
 /**
- * Displays an MOTD panel to a client using the given KeyValues handle as the subkeys.
+ * Displays an MOTD panel with TF2-specific options
  */
-stock void ShowMOTDPanelEx(int client, bool show, KeyValues subkeys) {
-	// TODO send a message using KV handle as key/values
-	// support both bitbuffers and protobufs
+stock void TF2_ShowMOTDPanel(int client, const char[] title, const char[] url, bool show = true,
+		bool big = false) {
+	KeyValues kv = new KeyValues("data");
+	
+	kv.SetString("title", title);
+	kv.SetNum("type", MOTDPANEL_TYPE_URL);
+	kv.SetString("msg", url);
+	
+	if (big) {
+		kv.SetNum("customsvr", 1);
+	}
+	
+	ShowVGUIPanel(client, "info", kv, show);
+	
+	delete kv;
 }
