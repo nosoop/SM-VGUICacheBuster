@@ -1,7 +1,7 @@
-all: build/output.zip
+all: build/package.zip
 
 # the things you have to do for gnuwin32
-build/output.zip: plugins/vgui_cache_buster.smx
+build/package.zip: plugins/vgui_cache_buster.smx
 	"mkdir" -p build
 	zip build/package.zip configs/* scripting/*.sp scripting/*/*.sp www/* plugins/* scripting/include/*
 
