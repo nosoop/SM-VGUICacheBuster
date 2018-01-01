@@ -30,7 +30,7 @@
 		
 		if (hash.startsWith('http')) {
 			// backcompat
-			document.querySelector('#proxied_content').setAttribute('src', url);
+			document.querySelector('#proxied_content').setAttribute('src', hash);
 		} else {
 			// using new method with params
 			let params = new URLSearchParams(hash);
