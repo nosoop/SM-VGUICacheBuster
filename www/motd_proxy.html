@@ -35,8 +35,14 @@
 			// using new method with params
 			let params = new URLSearchParams(hash);
 			let url = decodeURIComponent(params.get('url'));
+			let popup = params.has("popup");
 			
-			document.querySelector('#proxied_content').setAttribute('src', url);
+			if (popup) {
+				let w = Number(params.get('width')), h = Number(params.get('height'));
+				window.open(url, "_blank", `width=${w || screen.width},height=${h || screen.height}`);
+			} else {
+				document.querySelector('#proxied_content').setAttribute('src', url);
+			}
 		}
 	}
 	</script>

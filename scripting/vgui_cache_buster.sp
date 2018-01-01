@@ -23,7 +23,7 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "3.0.0"
+#define PLUGIN_VERSION "3.1.0"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop (and various bits from Invex | Byte, Boomix)",
@@ -144,9 +144,10 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 		 * 
 		 * always use delayed loads then, and if (show), proxy it
 		 */
-		bool bForceRewriteURL = GetEngineVersion() == Engine_CSGO && kvMessage.GetNum("show");
+		bool bDefaultPopup = GetEngineVersion() == Engine_CSGO && kvMessage.GetNum("show");
+		bool bPopup = !!kvMessage.GetNum("subkeys/x-vgui-popup", bDefaultPopup);
 		
-		if (pageBypass == Bypass_Proxy || bForceRewriteURL) {
+		if (pageBypass == Bypass_Proxy || bPopup) {
 			char newURL[1024];
 			
 			g_ProxyURL.GetString(newURL, sizeof(newURL));
@@ -162,9 +163,15 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			char encodedURL[1024], query[1024];
 			URLEncode(url, encodedURL, sizeof(encodedURL));
 			
-			// TODO maybe just iterate KV and add all "x-vgui-" params to query string
-			Format(query, sizeof(query), "width=%d&height=%d&url=%s",
-					popupWidth, popupHeight, encodedURL);
+			// popup default is true in cs:go, false in other games
+			if (bPopup) {
+				Format(query, sizeof(query), "popup&width=%d&height=%d&",
+						popupWidth, popupHeight);
+				StrCat(newURL, sizeof(newURL), query);
+			}
+			
+			// TODO maybe just iterate KV and add all "x-vgui-" params to query string?
+			Format(query, sizeof(query), "url=%s", encodedURL);
 			
 			StrCat(newURL, sizeof(newURL), query);
 			
