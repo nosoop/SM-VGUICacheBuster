@@ -23,6 +23,8 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
+#define PROXY_PAGE_TAGGED_VERSION "updog-1"
+
 #define PLUGIN_VERSION "3.1.0"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
@@ -58,7 +60,8 @@ public Plugin myinfo = {
  * ensures clients aren't using stale HTML files, as the newest version added support for params
  * embedded in the location hash.
  */
-#define MOTD_PROXY_URL "https://cdn.rawgit.com/nosoop/SM-VGUICacheBuster/3.0.0/www/motd_proxy.html"
+#define MOTD_PROXY_URL "https://cdn.rawgit.com/nosoop/SM-VGUICacheBuster/" \
+		... PROXY_PAGE_TAGGED_VERSION ... "/www/motd_proxy.html"
 
 /**
  * Path to the config file.
