@@ -1,4 +1,4 @@
-# VGUI Cache Buster
+# VGUI URL Cache Buster
 
 A workaround for webviews not updating when loading pages on the same domain in Source Engine
 games.
@@ -19,34 +19,43 @@ Here are details of the workarounds used to force in-game webviews to update.
 
 ### The "proxy" method
 
-The "proxy" method uses a static page that takes a URL embedded as a location hash and renders
-it in an `<iframe>` element.  This method works because location hash changes are still
-propagated.
+The "proxy" method uses a static page that takes parameters as a location hash and handles it
+through one of two methods:
 
-It works almost seamlessly when this method is usable, though a not insignificant number of
-pages do not permit cross-origin framing (Google, YouTube, Steam group pages, among others).
+* Renders it in an `<iframe>` element.  Works seamlessly&hellip; as long as your page supports
+cross-origin framing (popular sites including Google, YouTube, and Steam don't).
+* Opens the URL into a new window.  Used for CS:GO and when plugins explicitly request popup
+windows (see the extensions section).
+
+As location hashes are propagated regardless of being in the same domain, pages are displayed
+immediately.
 
 This method requires a static page to be served over HTTP(S).  The default provided is
 (currently) a valid copy, though it does mean you're putting trust on a page outside of your
-own control.  You can host a copy yourself; see the configuration section below.
+own control.
+
+You can host a copy yourself; see the configuration section below.
 
 ### The "delayed load" method
 
-The second method forces the client to first navigate away from the page, waiting a short amount
-of time, and then transmitting the requested page later.  The first request is made to 0.0.0.0
+This method forces the client to first navigate away from the page, waiting a short amount of
+time, and then transmitting the requested page later.  The first request is made to 0.0.0.0
 (an invalid IP address), which should fail immediately.
 
-From my testing, this workaround works most of the time, and no `<iframe>` element is required.
-However, it does induce a delay, and it seems to fail occasionally.
+From my testing, this workaround works most of the time, and no `<iframe>` element is required,
+meaning it should work with every site.  However, it does induce a delay, and it may fail
+occasionally.
 
 ## Extensions
 
-Extensions have been added where custom keys/values introduce new behavior that are handled with
-the plugin.
+Extensions have been added where custom keys/values in the usermessage introduce new behavior
+that are handled through this plugin.
 
-* `x-vgui-width` and `x-vgui-height` communicate the popup size in CS:GO.
+* `x-vgui-popup` determines if the message should be displayed in a popup window.
+* `x-vgui-width` and `x-vgui-height` determine the popup size.  If it is set to 0 or is not
+defined, it will use the screen dimensions as determined by the embedded browser.
 
-See `include/vgui_motd_stocks.inc` to see how.
+See `include/vgui_motd_stocks.inc` to see how they work.
 
 ## Configuration
 
@@ -65,22 +74,13 @@ to the requested page.  Value is in seconds.
 
 A configuration file is provided as `configs/vgui_cache_buster_urls.cfg`.  In the file, you
 can add a number of URL prefixes (without the protocol specifier), to be handled by either
-workaround or to bypass the workaround.
+workaround or to bypass the workaround entirely.
 
 See the provided file for more details.
 
 ### CS:GO-specific configuration
 
-CS:GO should only use the "delayed load" method.  There is an additional workaround implemented
-specifically for CS:GO that opens visible pages as a pop-up window, which is handled by a
-different proxy page that calls `window.open)`.
+Any `ShowMOTDPanel` calls that are supposed to make visible panels in CS:GO are rewritten to use
+a popup by default.
 
-1.  Set your `vgui_workaround_proxy_page` ConVar to a hosted copy of `www/popup_proxy.html`.
-You can also set the value to either `https://rawgit.com/nosoop/SM-VGUICacheBuster/3.0.0/www/popup_proxy.html`
-or `http://motdproxy.us.to/popup.html?v=3`.
-2.  Rename `configs/vgui_cache_buster_urls_csgo.cfg` to `configs/vgui_cache_buster_urls.cfg`.
-This forces usage of the wildcard and makes all URLs use the delayed load method.
-	* You theoretically *can* set pages that will always be displayed to use the `proxy` method
-	instead (as visible popups will just keep using the proxy).  Any hidden pages will still
-	need to use the delayed load, however.
-3.	Reload the plugin.
+No additional configuration is necessary.
