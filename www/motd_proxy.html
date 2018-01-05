@@ -36,7 +36,12 @@
 			let params = new URLSearchParams(hash);
 			let url = decodeURIComponent(params.get('url'));
 			
-			document.querySelector('#proxied_content').setAttribute('src', url);
+			if (params.has("popup")) {
+				let w = Number(params.get('width')), h = Number(params.get('height'));
+				window.open(url, "_blank", `width=${w || screen.width},height=${h || screen.height}`);
+			} else {
+				document.querySelector('#proxied_content').setAttribute('src', url);
+			}
 		}
 	}
 	</script>

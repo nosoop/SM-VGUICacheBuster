@@ -23,7 +23,7 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "3.0.1"
+#define PLUGIN_VERSION "3.1.2"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop (and various bits from Invex | Byte, Boomix)",
@@ -57,8 +57,11 @@ public Plugin myinfo = {
  * end.  It makes no difference whether the query is present or not to the server; it just
  * ensures clients aren't using stale HTML files, as the newest version added support for params
  * embedded in the location hash.
+ * 
+ * Reverted from using RawGit, as serving the page over HTTPS makes it refuse to load HTTP-only
+ * pages.
  */
-#define MOTD_PROXY_URL "https://cdn.rawgit.com/nosoop/SM-VGUICacheBuster/3.0.1/www/motd_proxy.html"
+#define MOTD_PROXY_URL "http://motdproxy.us.to/?v=" ... PLUGIN_VERSION
 
 /**
  * Path to the config file.
@@ -97,6 +100,20 @@ public void OnPluginStart() {
 	
 	UserMsg vguiMessage = GetUserMessageId("VGUIMenu");
 	HookUserMessage(vguiMessage, OnVGUIMenuPreSent, true);
+	
+	OnConfigsExecuted();
+}
+
+public void OnConfigsExecuted() {
+	// force enable MOTD, warn if changed
+	// https://forums.alliedmods.net/showpost.php?p=2569442&postcount=19
+	ConVar disabledMOTD = FindConVar("sv_disable_motd");
+	
+	if (disabledMOTD && disabledMOTD.BoolValue) {
+		LogMessage("MOTDs were disabled.  Turning them on.  (To stop seeing this message, "
+				... "set `sv_disable_motd` to 0 in your server configuration.)");
+		disabledMOTD.BoolValue = false;
+	}
 }
 
 /**
@@ -144,9 +161,10 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 		 * 
 		 * always use delayed loads then, and if (show), proxy it
 		 */
-		bool bForceRewriteURL = GetEngineVersion() == Engine_CSGO && kvMessage.GetNum("show");
+		bool bDefaultPopup = GetEngineVersion() == Engine_CSGO && kvMessage.GetNum("show");
+		bool bPopup = !!kvMessage.GetNum("subkeys/x-vgui-popup", bDefaultPopup);
 		
-		if (pageBypass == Bypass_Proxy || bForceRewriteURL) {
+		if (pageBypass == Bypass_Proxy || bPopup) {
 			char newURL[1024];
 			
 			g_ProxyURL.GetString(newURL, sizeof(newURL));
@@ -162,9 +180,15 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			char encodedURL[1024], query[1024];
 			URLEncode(url, encodedURL, sizeof(encodedURL));
 			
-			// TODO maybe just iterate KV and add all "x-vgui-" params to query string
-			Format(query, sizeof(query), "width=%d&height=%d&url=%s",
-					popupWidth, popupHeight, encodedURL);
+			// popup default is true in cs:go, false in other games
+			if (bPopup) {
+				Format(query, sizeof(query), "popup&width=%d&height=%d&",
+						popupWidth, popupHeight);
+				StrCat(newURL, sizeof(newURL), query);
+			}
+			
+			// TODO maybe just iterate KV and add all "x-vgui-" params to query string?
+			Format(query, sizeof(query), "url=%s", encodedURL);
 			
 			StrCat(newURL, sizeof(newURL), query);
 			
