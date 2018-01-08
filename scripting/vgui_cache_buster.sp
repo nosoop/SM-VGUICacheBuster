@@ -54,7 +54,7 @@ public Plugin myinfo = {
  * You can also configure the proxy page using the ConVar `vgui_workaround_proxy_page` instead.
  * 
  * Version 3 of this plugin changed the default proxy URL to have a version query added to the
- * end.  It makes no difference whether the query is present or not to the server; it just
+ * end.  It makes no difference whether the query is present or not to the HTTP server; it just
  * ensures clients aren't using stale HTML files, as the newest version added support for params
  * embedded in the location hash.
  * 
@@ -187,7 +187,6 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 				StrCat(newURL, sizeof(newURL), query);
 			}
 			
-			// TODO maybe just iterate KV and add all "x-vgui-" params to query string?
 			Format(query, sizeof(query), "url=%s", encodedURL);
 			
 			StrCat(newURL, sizeof(newURL), query);

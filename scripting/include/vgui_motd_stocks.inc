@@ -10,15 +10,17 @@
 
 #define _vgui_motd_stocks_included
 
-// TODO register cache buster as a shared plugin?
-// have to figure out some way to ensure these extended features are discoverable
-
-// if 0 cache buster will not pass dimensions to proxy page and assume default
-#define CSGO_POPUP_FULL 0
+// if 0 cache buster will assume default sizing through javascript
 #define POPUP_FULL_SIZE 0
 
+// legacy constant, popup support is available in more games now
+#define CSGO_POPUP_FULL POPUP_FULL_SIZE
+
 /**
- * Displays an MOTD panel with CS:GO-specific options.
+ * Displays an MOTD panel with CS:GO-specific options.  VUCB will determine if the panel needs
+ * to be displayed as a popup or not.
+ * 
+ * To always display a page as a popup, use `ShowMOTDPopupPanel`.
  */
 stock void CSGO_ShowMOTDPanel(int client, const char[] title, const char[] url,
 		bool show = false, int width = POPUP_FULL_SIZE, int height = POPUP_FULL_SIZE) {
@@ -37,6 +39,7 @@ stock void CSGO_ShowMOTDPanel(int client, const char[] title, const char[] url,
 		kv.SetNum("x-vgui-height", height);
 	}
 	
+	// show is true here since VUCB determines whether to use a popup through it for CS:GO
 	ShowVGUIPanel(client, "info", kv, show);
 	
 	delete kv;
