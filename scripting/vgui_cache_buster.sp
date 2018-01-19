@@ -23,7 +23,7 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "3.1.2"
+#define PLUGIN_VERSION "3.1.3"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop (and various bits from Invex | Byte, Boomix)",
@@ -185,6 +185,8 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 				Format(query, sizeof(query), "popup&width=%d&height=%d&",
 						popupWidth, popupHeight);
 				StrCat(newURL, sizeof(newURL), query);
+				
+				kvMessage.SetNum("show", false);
 			}
 			
 			Format(query, sizeof(query), "url=%s", encodedURL);
@@ -196,6 +198,10 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 			LogDebug("Rewriting URL for method %d: %s", pageBypass, newURL);
 		} else {
 			LogDebug("Passing URL as method %d: %s", pageBypass, url);
+		}
+		
+		if (bPopup) {
+			pageBypass = Bypass_DelayedLoad;
 		}
 		
 		// pack player count, list of players (userid), kvmessage, and flags
