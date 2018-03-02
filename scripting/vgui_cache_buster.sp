@@ -79,6 +79,8 @@ enum BypassMethod {
 KeyValues g_URLConfig;
 ConVar g_ProxyURL, g_PageDelay, g_DebugSpew;
 
+float g_flBlockInfoPanels[MAXPLAYERS + 1];
+
 public void OnPluginStart() {
 	char configPath[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, configPath, sizeof(configPath), "%s", PLUGIN_CONFIG_FILE);
@@ -114,6 +116,10 @@ public void OnConfigsExecuted() {
 				... "set `sv_disable_motd` to 0 in your server configuration.)");
 		disabledMOTD.BoolValue = false;
 	}
+}
+
+public void OnClientConnected(int client) {
+	g_flBlockInfoPanels[client] = GetGameTime() - (g_PageDelay.FloatValue * 2.0);
 }
 
 /**
@@ -250,8 +256,10 @@ public void DelayedSendDataPackVGUI_Pre(DataPack dataBuffer) {
 	for (int i = 0; i < nPackedPlayers; i++) {
 		int recipient = GetClientOfUserId(dataBuffer.ReadCell());
 		
-		if (recipient) {
+		// send it to clients that don't have a pending usermess
+		if (recipient && GetGameTime() > g_flBlockInfoPanels[recipient]) {
 			players[nPlayers++] = recipient;
+			g_flBlockInfoPanels[recipient] = g_PageDelay.FloatValue + GetGameTime();
 		}
 	}
 	
