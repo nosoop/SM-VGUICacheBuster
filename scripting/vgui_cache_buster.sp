@@ -23,7 +23,7 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "3.1.4"
+#define PLUGIN_VERSION "3.1.4a"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop (and various bits from Invex | Byte, Boomix)",
@@ -149,7 +149,7 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 		if (StrContains(url, "http") != 0 || StrEqual(url, INVALID_PAGE_URL)
 				|| panelType != MOTDPANEL_TYPE_URL
 				|| (pageBypass = GetBypassMethodForURL(url)) == Bypass_None) {
-			LogDebug("wew blocked %s", url);
+			LogDebug("Performed no processing on URL %s", url);
 			delete kvMessage;
 			return Plugin_Continue;
 		}
