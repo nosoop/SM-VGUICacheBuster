@@ -23,7 +23,7 @@
 #include "vgui_cache_buster/bitbuf.sp"
 #include "vgui_cache_buster/protobuf.sp"
 
-#define PLUGIN_VERSION "3.1.3"
+#define PLUGIN_VERSION "3.1.4"
 public Plugin myinfo = {
 	name = "[ANY] VGUI URL Cache Buster",
 	author = "nosoop (and various bits from Invex | Byte, Boomix)",
@@ -74,6 +74,7 @@ enum BypassMethod {
 	Bypass_None, // passthrough -- don't manipulate the usermsg
 	Bypass_Proxy, // use MOTD proxy page
 	Bypass_DelayedLoad, // use timer and invalid page url
+	Bypass_ProxyPopups, // use MOTD proxy page *only* for popups (or manual override)
 };
 
 KeyValues g_URLConfig;
@@ -148,6 +149,7 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 		if (StrContains(url, "http") != 0 || StrEqual(url, INVALID_PAGE_URL)
 				|| panelType != MOTDPANEL_TYPE_URL
 				|| (pageBypass = GetBypassMethodForURL(url)) == Bypass_None) {
+			LogDebug("wew blocked %s", url);
 			delete kvMessage;
 			return Plugin_Continue;
 		}
@@ -163,6 +165,14 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 		 */
 		bool bDefaultPopup = GetEngineVersion() == Engine_CSGO && kvMessage.GetNum("show");
 		bool bPopup = !!kvMessage.GetNum("subkeys/x-vgui-popup", bDefaultPopup);
+		
+		if (pageBypass == Bypass_ProxyPopups) {
+			if (!bPopup) {
+				delete kvMessage;
+				return Plugin_Continue;
+			}
+			pageBypass = Bypass_Proxy;
+		}
 		
 		if (pageBypass == Bypass_Proxy || bPopup) {
 			char newURL[1024];
@@ -201,7 +211,7 @@ public Action OnVGUIMenuPreSent(UserMsg vguiMessage, Handle buffer, const int[] 
 		}
 		
 		if (bPopup) {
-			pageBypass = Bypass_DelayedLoad;
+			pageBypass = Bypass_Proxy;
 		}
 		
 		// pack player count, list of players (userid), kvmessage, and flags
@@ -376,6 +386,8 @@ static BypassMethod GetBypassMethodFromString(const char[] bypassMethod) {
 		return Bypass_Proxy;
 	} else if (StrEqual(bypassMethod, "delayed")) {
 		return Bypass_DelayedLoad;
+	} else if (StrEqual(bypassMethod, "proxy_popups")) {
+		return Bypass_ProxyPopups;
 	} else if (StrEqual(bypassMethod, "none")) {
 		return Bypass_None;
 	}
