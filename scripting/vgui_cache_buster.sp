@@ -428,8 +428,8 @@ void URLEncode(const char[] sString, char[] sResult, int len) {
 				break;
 			}
 			sResult[to++] = '%';
-			sResult[to++] = sHexTable[c >> 4];
-			sResult[to++] = sHexTable[c & 15];
+			sResult[to++] = sHexTable[view_as<any>(c) >> 4];
+			sResult[to++] = sHexTable[view_as<any>(c) & 15];
 		} else {
 			sResult[to++] = c;
 		}
